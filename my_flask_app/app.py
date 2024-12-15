@@ -4,50 +4,38 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'  # SQLite kullanımı
-app.config['SECRET_KEY'] = 'your_secret_key'  # Uygulama için gizli anahtar
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SECRET_KEY'] = 'your_secret_key'
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Kullanıcı modelini oluşturmak için models.py'yi kontrol edin.
+# Kullanıcı modelini models.py'de tanımlayacağız
 from models import User
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Ana sayfa rotası
 @app.route('/')
 def home():
     return render_template('base.html')
 
-# Kayıt olma rotası
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
-        # Kullanıcı adı daha önce alınmış mı kontrol et
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            flash('Bu kullanıcı adı zaten alınmış. Lütfen başka bir kullanıcı adı deneyin.', 'danger')
-            return redirect(url_for('register'))
-
-        # Şifreyi hashleyip kullanıcıyı veritabanına ekle
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         new_user = User(username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-        flash('Kayıt başarılı! Şimdi giriş yapabilirsiniz.', 'success')
+        flash('Kayıt başarılı! Giriş yapabilirsiniz.', 'success')
         return redirect(url_for('login'))
-
     return render_template('register.html')
 
-# Giriş rotası
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -62,13 +50,11 @@ def login():
             flash('Kullanıcı adı veya şifre yanlış.', 'danger')
     return render_template('login.html')
 
-# Dashboard rotası (korumalı rota)
 @app.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('dashboard.html', username=current_user.username)
 
-# Çıkış rotası
 @app.route('/logout')
 @login_required
 def logout():
@@ -77,4 +63,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) 
