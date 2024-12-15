@@ -40,5 +40,13 @@ def register():
 if __name__ == "__main__":
     init_db()  # Sunucu başlamadan önce veritabanını oluştur
     app.run(debug=True)
+@app.route("/users")
+def users():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users")
+    users = cursor.fetchall()  # Tüm kullanıcıları al
+    conn.close()
+    return render_template("users.html", users=users)
 
 
